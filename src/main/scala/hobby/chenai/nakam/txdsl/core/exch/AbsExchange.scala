@@ -120,12 +120,11 @@ abstract class CoinEx(val pricingToken: AbsTokenGroup, val pricingCash: AbsCashG
 
   protected def getExRate[CG <: AbsCoinGroup](tokenGroup: AbsTokenGroup, token$cash: Boolean): CG#COIN
 
-  def applyExch(src: AbsCoinGroup#AbsCoin, dst: AbsCoinGroup#Unt, ceiling: Boolean): AbsCoinGroup#AbsCoin = {
-    // pricingToken已经在supportTokens里面了
-    if (
-      (if (src.isCash) src.group eq pricingCash else supportTokens.contains(src.group.as[AbsTokenGroup])) &&
-      (if (dst.isCash) dst.group eq pricingCash else supportTokens.contains(dst.group.as[AbsTokenGroup]))
-    ) {
+  /** `pricingToken`是包含在`supportTokens`里面的。 */
+  final def isCoinSupported(coin: AbsCoinGroup#AbsCoin): Boolean = coin.group == pricingCash || supportTokens.contains(coin.group.as[AbsTokenGroup])
+
+  final def applyExch(src: AbsCoinGroup#AbsCoin, dst: AbsCoinGroup#Unt, ceiling: Boolean): AbsCoinGroup#AbsCoin = {
+    if (isCoinSupported(src) && isCoinSupported(dst)) {
       ex.applyOrElse((src, dst, ceiling, true), (x: (AbsCoinGroup#AbsCoin, _, _, _)) => x._1)
     } else src
   }
@@ -133,7 +132,7 @@ abstract class CoinEx(val pricingToken: AbsTokenGroup, val pricingCash: AbsCashG
   /**
     * 有token(btc)定价则优先token, 否则强制法币定价（若没有则报错）。
     */
-  private lazy val ex: (AbsCoinGroup#AbsCoin, AbsCoinGroup#AbsCoin, Boolean, Boolean) PartialFunction AbsCoinGroup#AbsCoin = {
+  private final lazy val ex: (AbsCoinGroup#AbsCoin, AbsCoinGroup#AbsCoin, Boolean, Boolean) PartialFunction AbsCoinGroup#AbsCoin = {
     // pricingCash => pricingCash // 到这里不会出现两个不一样的法币。
     case (cash: AbsCashGroup#AbsCoin, dst: AbsCashGroup#AbsCoin, _, _) => dst.unit << cash
     // token => pricingCash
