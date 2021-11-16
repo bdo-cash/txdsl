@@ -272,7 +272,7 @@ package object coin {
       case YFII.name  => tuple._1 YFII
       case ZEC.name   => tuple._1 ZEC
       case name @ _   => otherTokensUntStdMap.getOrElseUpdate(name.ensuring(_ == name.toUpperCase.trim), new OtherToken(name).unitStd) * tuple._1
-      case _          => ??? // 交易所的所有币种不可能都列出来，不能简单地抛出异常。throw new RuntimeException(s"不存在指定的币种，或不是[标准]单位:$coin".tag)
+      //case _          => ??? // 交易所的所有币种不可能都列出来，不能简单地抛出异常。throw new RuntimeException(s"不存在指定的币种，或不是[标准]单位:$coin".tag)
     })
   }
 

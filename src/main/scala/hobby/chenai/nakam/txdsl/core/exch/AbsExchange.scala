@@ -18,7 +18,7 @@ package hobby.chenai.nakam.txdsl.core.exch
 
 import hobby.chenai.nakam.lang.TypeBring.AsIs
 import hobby.chenai.nakam.tool.cache.{Delegate, LazyGet, Lru, Memoize}
-import hobby.chenai.nakam.txdsl.core.coin.{AbsCoinGroup, AbsTokenGroup, _}
+import hobby.chenai.nakam.txdsl.core.coin._
 import java.util.concurrent.ConcurrentHashMap
 import scala.language.postfixOps
 
@@ -62,9 +62,9 @@ abstract class AbsExchange(val name: String, override val pricingToken: AbsToken
   /** 从加密货币到比特币的汇率。 */
   private final lazy val tokenPriRateMap = new ConcurrentHashMap[AbsTokenGroup, PriTCoin]
 
-  override final def isCashExSupported(token: AbsTokenGroup) = cashPriRateMap.containsKey(token)
+  override final def isCashExSupport(token: AbsTokenGroup) = cashPriRateMap.containsKey(token)
 
-  override final def isTokenExSupported(token: AbsTokenGroup) = tokenPriRateMap.containsKey(token)
+  override final def isTokenExSupport(token: AbsTokenGroup) = tokenPriRateMap.containsKey(token)
 
   protected final lazy val impl = coinTpeImpl[PriTCoin, PriCCoin]
 
@@ -73,6 +73,7 @@ abstract class AbsExchange(val name: String, override val pricingToken: AbsToken
     */
   final def updateCashPricingRate(token: AbsTokenGroup#Unt, rate: AbsCashGroup#AbsCoin): Unit = {
     import impl._
+    assert(token.group != rate.group && rate.group == pricingCash)
     cashPriRateMap.put(requireSupports(token.group), rate)
   }
 
@@ -81,6 +82,7 @@ abstract class AbsExchange(val name: String, override val pricingToken: AbsToken
     */
   final def updateTokenPricingRate(token: AbsTokenGroup#Unt, rate: AbsTokenGroup#AbsCoin): Unit = {
     import impl._
+    assert(token.group != rate.group && rate.group == pricingToken)
     tokenPriRateMap.put(requireSupports(token.group), rate)
   }
 
@@ -92,10 +94,11 @@ abstract class AbsExchange(val name: String, override val pricingToken: AbsToken
     tokenGroup
   }
 
-  override final def getExRate[CG <: AbsCoinGroup](tokenGroup: AbsTokenGroup, token$cash: Boolean) = {
+  /** @tparam CG  [[PriTCoin]]#GROP for `token$cash = true`, [[PriCCoin]]#GROP for `token$cash = false`. */
+  override final def getExRate[CG <: AbsCoinGroup](tokenGroup: AbsTokenGroup, token$cash: Boolean, ignoreZero: Boolean = false) = {
     val rate = if (token$cash) tokenPriRateMap.get(tokenGroup) else cashPriRateMap.get(tokenGroup)
     require(
-      rate != null && rate.value > 0,
+      rate != null && (ignoreZero || rate.value > java.math.BigDecimal.ZERO),
       s"rate of $tokenGroup(:${if (token$cash) pricingToken.unitStd else pricingCash.unitStd}) have not initialized on `$name`."
     )
     rate.as[CG#COIN]
@@ -114,17 +117,17 @@ abstract class CoinEx(val pricingToken: AbsTokenGroup, val pricingCash: AbsCashG
 
   protected def getFfdRule[T <: AbsTokenGroup, C <: AbsCoinGroup](token: T, pricingCoin: C): FixedFracDigitsRule
 
-  protected def isTokenExSupported(token: AbsTokenGroup): Boolean
+  protected def isTokenExSupport(token: AbsTokenGroup): Boolean
 
-  protected def isCashExSupported(token: AbsTokenGroup): Boolean
+  protected def isCashExSupport(token: AbsTokenGroup): Boolean
 
-  protected def getExRate[CG <: AbsCoinGroup](tokenGroup: AbsTokenGroup, token$cash: Boolean): CG#COIN
+  protected def getExRate[CG <: AbsCoinGroup](tokenGroup: AbsTokenGroup, token$cash: Boolean, ignoreZero: Boolean = false): CG#COIN
 
   /** `pricingToken`是包含在`supportTokens`里面的。 */
-  final def isCoinSupported(coin: AbsCoinGroup#AbsCoin): Boolean = coin.group == pricingCash || supportTokens.contains(coin.group.as[AbsTokenGroup])
+  final def isCoinSupport(coin: AbsCoinGroup#AbsCoin, pricingOnly: Boolean = false): Boolean = coin.group == pricingCash || (if (pricingOnly) coin.group == pricingToken else supportTokens.contains(coin.group.as[AbsTokenGroup]))
 
   final def applyExch(src: AbsCoinGroup#AbsCoin, dst: AbsCoinGroup#Unt, ceiling: Boolean): AbsCoinGroup#AbsCoin = {
-    if (isCoinSupported(src) && isCoinSupported(dst)) {
+    if (isCoinSupport(src) && isCoinSupport(dst)) {
       ex.applyOrElse((src, dst, ceiling, true), (x: (AbsCoinGroup#AbsCoin, _, _, _)) => x._1)
     } else src
   }
@@ -137,7 +140,7 @@ abstract class CoinEx(val pricingToken: AbsTokenGroup, val pricingCash: AbsCashG
     case (cash: AbsCashGroup#AbsCoin, dst: AbsCashGroup#AbsCoin, _, _) => dst.unit << cash
     // token => pricingCash
     case (token: AbsTokenGroup#AbsCoin, dst: AbsCashGroup#AbsCoin, ceiling, promise) =>
-      if (promise /*注意这个promise不能把任务再转给pricingToken，不然会死递归*/ || isCashExSupported(token.group)) {
+      if (promise /*注意这个promise不能把任务再转给pricingToken，不然会死递归*/ || isCashExSupport(token.group)) {
         val ffdRule = getFfdRule(token.group, dst.group)
         import ffdRule._
         import ffdRule.impl._
@@ -145,7 +148,7 @@ abstract class CoinEx(val pricingToken: AbsTokenGroup, val pricingCash: AbsCashG
       } else token
     // pricingCash => token
     case (cash: AbsCashGroup#AbsCoin, dst: AbsTokenGroup#AbsCoin, ceiling, promise) =>
-      if (promise || isCashExSupported(dst.group)) {
+      if (promise || isCashExSupport(dst.group)) {
         val ffdRule = getFfdRule(dst.group, cash.group)
         import ffdRule._
         import ffdRule.impl._
@@ -156,7 +159,7 @@ abstract class CoinEx(val pricingToken: AbsTokenGroup, val pricingCash: AbsCashG
       dst.unit << token
     // token => pricingToken
     case (token: AbsTokenGroup#AbsCoin, dst: AbsTokenGroup#AbsCoin, ceiling, promise) if dst.group eq pricingToken =>
-      if (isTokenExSupported(token.group)) {
+      if (isTokenExSupport(token.group)) {
         val ffdRule = getFfdRule(token.group, dst.group)
         import ffdRule._
         import ffdRule.impl._
@@ -165,7 +168,7 @@ abstract class CoinEx(val pricingToken: AbsTokenGroup, val pricingCash: AbsCashG
       else token
     // pricingToken => token
     case (token: AbsTokenGroup#AbsCoin, dst: AbsTokenGroup#AbsCoin, ceiling, promise) if token.group eq pricingToken =>
-      if (isTokenExSupported(dst.group)) {
+      if (isTokenExSupport(dst.group)) {
         val ffdRule = getFfdRule(dst.group, token.group)
         import ffdRule._
         import ffdRule.impl._
@@ -176,10 +179,10 @@ abstract class CoinEx(val pricingToken: AbsTokenGroup, val pricingCash: AbsCashG
     case (src: AbsTokenGroup#AbsCoin, dst: AbsTokenGroup#AbsCoin, ceiling, promise) =>
       if (dst.group == src.group) dst.unit << src
       else {
-        val ptf = isTokenExSupported(src.group)
-        val ptt = isTokenExSupported(dst.group)
-        val cf  = isCashExSupported(src.group)
-        val ct  = isCashExSupported(dst.group)
+        val ptf = isTokenExSupport(src.group)
+        val ptt = isTokenExSupport(dst.group)
+        val cf  = isCashExSupport(src.group)
+        val ct  = isCashExSupport(dst.group)
         if (ptf && ptt) ex.apply(ex.apply(src, pricingToken.unitStd, ceiling, false), dst, ceiling, false)
         else if (cf && ct) ex.apply(ex.apply(src, pricingCash.unitStd, ceiling, false), dst, ceiling, false)
         else if (promise) {
