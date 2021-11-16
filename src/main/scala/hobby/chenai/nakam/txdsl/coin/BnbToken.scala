@@ -21,37 +21,39 @@ import hobby.chenai.nakam.txdsl.core.coin.AbsTokenGroup
 import scala.language.implicitConversions
 import scala.math.BigInt.int2bigInt
 
-/**
+/** `币安`交易所的平台币。
+  *
   * @author Chenai Nakam(chenai.nakam@gmail.com)
-  * @version 1.0, 30/08/2020
+  * @version 1.0, 16/11/2021
   */
-object CreditToken extends AbsTokenGroup {
-  override type COIN = ProxiDeFi
+object BnbToken extends AbsTokenGroup {
+  override type COIN = Bnb
   override type UNIT = COIN with Unt
 
-  override def unitStd = CREDIT
+  override def unitStd = BNB
 
-  override def make(count: BigInt, unt: UNIT) = new ProxiDeFi(count) {
+  override def make(count: BigInt, unt: UNIT) = new Bnb(count) {
     override def unit = unt
   }
 
-  abstract class ProxiDeFi private[CreditToken](count: BigInt) extends AbsCoin(count: BigInt) {
+  abstract class Bnb private[BnbToken] (count: BigInt) extends AbsCoin(count: BigInt) {
+
     override def equals(obj: Any) = obj match {
-      case that: ProxiDeFi => that.canEqual(this) && that.count == this.count
-      case _ => false
+      case that: Bnb => that.canEqual(this) && that.count == this.count
+      case _         => false
     }
 
-    override def canEqual(that: Any) = that.isInstanceOf[ProxiDeFi]
+    override def canEqual(that: Any) = that.isInstanceOf[Bnb]
   }
 
-  lazy val CREDIT: UNIT = new ProxiDeFi(10.pow(8)) with Unt {
-    override val name = "CREDIT"
+  lazy val BNB: UNIT = new Bnb(10.pow(8)) with Unt {
+    override val name = "BNB"
   }
 
   class DslImpl(count: BigDecimal) {
-    @inline def CREDIT: COIN = CreditToken.CREDIT * count
+    @inline def BNB: COIN = BnbToken.BNB * count
   }
 
-  @inline implicit def wrapCreditNum(count: Double): DslImpl = new DslImpl(count)
-  @inline implicit def wrapCreditNum(count: BigDecimal): DslImpl = new DslImpl(count)
+  @inline implicit def wrapBnbNum(count: Double): DslImpl     = new DslImpl(count)
+  @inline implicit def wrapBnbNum(count: BigDecimal): DslImpl = new DslImpl(count)
 }

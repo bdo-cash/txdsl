@@ -21,7 +21,7 @@ import hobby.chenai.nakam.txdsl.core.coin.AbsTokenGroup
 import scala.language.implicitConversions
 import scala.math.BigInt.int2bigInt
 
-/**
+/** `GateIo`交易所的平台币。
   * @author Chenai Nakam(chenai.nakam@gmail.com)
   * @version 1.0, 30/08/2020
   */
@@ -35,10 +35,11 @@ object GtToken extends AbsTokenGroup {
     override def unit = unt
   }
 
-  abstract class GateToken private[GtToken](count: BigInt) extends AbsCoin(count: BigInt) {
+  abstract class GateToken private[GtToken] (count: BigInt) extends AbsCoin(count: BigInt) {
+
     override def equals(obj: Any) = obj match {
       case that: GateToken => that.canEqual(this) && that.count == this.count
-      case _ => false
+      case _               => false
     }
 
     override def canEqual(that: Any) = that.isInstanceOf[GateToken]
@@ -52,6 +53,6 @@ object GtToken extends AbsTokenGroup {
     @inline def GT: COIN = GtToken.GT * count
   }
 
-  @inline implicit def wrapGtNum(count: Double): DslImpl = new DslImpl(count)
+  @inline implicit def wrapGtNum(count: Double): DslImpl     = new DslImpl(count)
   @inline implicit def wrapGtNum(count: BigDecimal): DslImpl = new DslImpl(count)
 }

@@ -17,41 +17,35 @@
 package hobby.chenai.nakam.txdsl.coin
 
 import hobby.chenai.nakam.txdsl.core.coin.AbsTokenGroup
-
-import scala.language.implicitConversions
 import scala.math.BigInt.int2bigInt
 
 /**
   * @author Chenai Nakam(chenai.nakam@gmail.com)
-  * @version 1.0, 30/08/2020
+  * @version 1.0, 16/11/2021
   */
-object CsToken extends AbsTokenGroup {
-  override type COIN = Credits
+class OtherToken(name: String, precision: Int = 8) extends AbsTokenGroup { outer =>
+  require(precision >= 0 && precision <= 18) // eth: 10^18
+
+  override type COIN = Tkn
   override type UNIT = COIN with Unt
 
-  override def unitStd = CS
+  override def unitStd = uStd
 
-  override def make(count: BigInt, unt: UNIT) = new Credits(count) {
+  override def make(count: BigInt, unt: UNIT) = new Tkn(count) {
     override def unit = unt
   }
 
-  abstract class Credits private[CsToken](count: BigInt) extends AbsCoin(count: BigInt) {
+  abstract class Tkn private[OtherToken] (count: BigInt) extends AbsCoin(count: BigInt) {
+
     override def equals(obj: Any) = obj match {
-      case that: Credits => that.canEqual(this) && that.count == this.count
-      case _ => false
+      case that: Tkn => that.canEqual(this) && that.count == this.count
+      case _         => false
     }
 
-    override def canEqual(that: Any) = that.isInstanceOf[Credits]
+    override def canEqual(that: Any) = that.isInstanceOf[Tkn]
   }
 
-  lazy val CS: UNIT = new Credits(10.pow(8)) with Unt {
-    override val name = "CS"
+  private lazy val uStd: UNIT = new Tkn(10.pow(precision)) with Unt {
+    override val name = outer.name
   }
-
-  class DslImpl(count: BigDecimal) {
-    @inline def CS: COIN = CsToken.CS * count
-  }
-
-  @inline implicit def wrapCsNum(count: Double): DslImpl = new DslImpl(count)
-  @inline implicit def wrapCsNum(count: BigDecimal): DslImpl = new DslImpl(count)
 }
