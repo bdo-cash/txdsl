@@ -285,8 +285,8 @@ package object coin {
       case Serializer(coin) => Some(coin.ensuring(_.nonNull)) // 相当于`case opt @ Serializer.unapply(tuple) if opt.isDefined =>`
       case _                => None
     }
-    def coin: CoinAmt = desrl.get
-    def token: TokenAmt = desrl.get.token
+    @inline def coin: CoinAmt = desrl.get
+    @inline def token: TokenAmt = coin.token
   } // format: on
 
   implicit class Str2BigInt(count: String) {
