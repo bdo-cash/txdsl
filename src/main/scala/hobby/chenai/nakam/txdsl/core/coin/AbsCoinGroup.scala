@@ -89,7 +89,7 @@ abstract class AbsCoinGroup {
     def mod(unit: UNIT): COIN = if (unit eq this.unit) this else make(count, unit)
 
     /** （按比率）转换到指定的[[AbsCoinGroup]]，如果目标是本[[GROUP]]，则不转换。 */
-    def chg[G <: AbsCoinGroup](group: G, rate: BigDecimal = 1): G#COIN = if (group eq this.group) this.as[G#COIN] else group.unitStd * (std.value * rate)
+    def chg[G <: AbsCoinGroup](group: G, rate: BigDecimal = ONE): G#COIN = if (group eq this.group) this.as[G#COIN] else group.unitStd * (std.value * rate)
 
     override def compare(that: COIN) = this.count compare that.count
 
@@ -121,11 +121,12 @@ abstract class AbsCoinGroup {
     def nameFmt: String = name
 
     /** 校准小数位。 */
-    def decmlFmtAdj = BigDecimal(1)
+    def decmlFmtAdj = ONE
     def decmlFmtFfd = decimals(count)
 
     @tailrec
-    final def decimals(n: BigInt = count, base: Int = 0): Int = if (n < 10) base else decimals(n / 10, 1 + base)
+    final def decimals(n: BigInt = count, base: Int = 0): Int = if (n < TENi) base else decimals(n / TENi, 1 + base)
+
     final def <<(coin: AbsCoinGroup#AbsCoin): COIN = coin mod unit
   }
 }

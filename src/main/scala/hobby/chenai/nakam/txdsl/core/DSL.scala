@@ -16,9 +16,8 @@
 
 package hobby.chenai.nakam.txdsl.core
 
-import hobby.chenai.nakam.txdsl.core.coin.{AbsCashGroup, AbsCoinGroup}
+import hobby.chenai.nakam.txdsl.core.coin._
 import hobby.chenai.nakam.txdsl.core.exch.AbsExchange
-
 import scala.language.implicitConversions
 
 /**
@@ -44,45 +43,46 @@ object DSL {
 
   object Action extends Enumeration {
     type ACTION = Act
+
     private[Action] class Act(val msg: String, val symbol: String) extends Val {
       override def toString() = prefix + " " + msg
 
       lazy val prefix = symbols(9 - msg.length)(symbol).mkString("")
       lazy val suffix = symbols(3)(symbol).mkString("")
     }
-    val BUY = new Act("buy", "<")
-    val SALE = new Act("sale", ">")
+    val BUY    = new Act("buy", "<")
+    val SALE   = new Act("sale", ">")
     val CANCEL = new Act("cancel", "!")
   }
 
   import Action._
 
   object Ops {
-    def buy(token: AbsCoinGroup#AbsCoin) = new Ops(BUY, token)
+    def buy(token: CoinAmt) = new Ops(BUY, token)
 
-    def sale(token: AbsCoinGroup#AbsCoin) = new Ops(SALE, token)
+    def sale(token: CoinAmt) = new Ops(SALE, token)
 
-    def cancel(token: AbsCoinGroup#AbsCoin) = new Ops(CANCEL, token)
+    def cancel(token: CoinAmt) = new Ops(CANCEL, token)
   }
 
-  class Ops(val action: ACTION, val token: AbsCoinGroup#AbsCoin) {
+  class Ops(val action: ACTION, val token: CoinAmt) {
     private implicit var exchange: AbsExchange = _
-    private var cash: AbsCashGroup#AbsCoin = _
+    private var cash: Cash#AbsCoin             = _
 
     def on(exchange: AbsExchange): Ops = {
       this.exchange = exchange
       this
     }
 
-    def use(cash: AbsCashGroup#AbsCoin): Ops = {
+    def use(cash: Cash#AbsCoin): Ops = {
       this.cash = cash
       this
     }
 
     def ~>= : Ops = {
       println(s"$action: ${token.formatted(15)()} on ${exchange.name}" +
-        s" use ${(if (cash == null) token to exchange.pricingCash.unitStd else cash).formatted(15)()}" +
-        s" ${action.suffix} scheduling...")
+      s" use ${(if (cash == null) token to exchange.pricingCash.unitStd else cash).formatted(15)()}" +
+      s" ${action.suffix} scheduling...")
       this
     }
   }

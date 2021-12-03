@@ -30,6 +30,7 @@ class OtherToken(name: String, precision: Int = 8) extends AbsTokenGroup { outer
   override type UNIT = COIN with Unt
 
   override def unitStd = uStd
+  override def unitMin = uStm
 
   override def make(count: BigInt, unt: UNIT) = new Tkn(count) {
     override def unit = unt
@@ -47,5 +48,9 @@ class OtherToken(name: String, precision: Int = 8) extends AbsTokenGroup { outer
 
   private lazy val uStd: UNIT = new Tkn(10.pow(precision)) with Unt {
     override val name = outer.name
+  }
+
+  private lazy val uStm: UNIT = new Tkn(1) with Unt {
+    override val name = outer.name + ".stm"
   }
 }

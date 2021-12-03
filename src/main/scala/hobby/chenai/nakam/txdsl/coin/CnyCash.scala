@@ -16,7 +16,7 @@
 
 package hobby.chenai.nakam.txdsl.coin
 
-import hobby.chenai.nakam.txdsl.core.coin.AbsCashGroup
+import hobby.chenai.nakam.txdsl.core.coin.{AbsCashGroup, ONE}
 import scala.language.implicitConversions
 
 /**

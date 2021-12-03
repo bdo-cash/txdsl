@@ -16,7 +16,7 @@
 
 package hobby.chenai.nakam.txdsl.core.exch
 
-import hobby.chenai.nakam.txdsl.core.coin.AbsCoinGroup
+import hobby.chenai.nakam.txdsl.core.coin.Coin
 import hobby.chenai.nakam.util.NumFmt
 
 /**
@@ -33,7 +33,7 @@ import hobby.chenai.nakam.util.NumFmt
   * @version 1.0, 18/07/2017;
   *          1.1, 10/05/2021, 去掉`cutTotal`参数，交易所不会截断两次，太极端。增加方法参数`ceiling`以满足实际需求。
   */
-class FixedFracDigitsRule(val tokenGroup: AbsCoinGroup, val ffd4Token: Int, val pricingCoinGroup: AbsCoinGroup, val ffd4Pricing: Int) {
+class FixedFracDigitsRule(val tokenGroup: Coin, val ffd4Token: Int, val pricingCoinGroup: Coin, val ffd4Pricing: Int) {
   def cut(token: tokenGroup.COIN): BigDecimal = token.std.valueFfd(fixedFracDigits = ffd4Token)
 
   def cut$(pricing: pricingCoinGroup.COIN): BigDecimal = pricing.std.valueFfd(fixedFracDigits = ffd4Pricing)

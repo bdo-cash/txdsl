@@ -16,18 +16,18 @@
 
 package hobby.chenai.nakam.txdsl.core.exch
 
-import hobby.chenai.nakam.txdsl.core.coin.AbsCoinGroup
 import hobby.chenai.nakam.lang.TypeBring
+import hobby.chenai.nakam.txdsl.core.coin._
 
 /**
   * @author Chenai Nakam(chenai.nakam@gmail.com)
   * @version 1.0, 10/07/2018
   */
 object coinTpeImpl {
-  def apply[PriTC <: AbsCoinGroup#AbsCoin, PriCC <: AbsCoinGroup#AbsCoin]: coinTpeImpl[PriTC, PriCC] = new coinTpeImpl[PriTC, PriCC] {}
+  def apply[PriTC <: CoinAmt, PriCC <: CoinAmt]: coinTpeImpl[PriTC, PriCC] = new coinTpeImpl[PriTC, PriCC] {}
 }
 
-trait coinTpeImpl[PriTC <: AbsCoinGroup#AbsCoin, PriCC <: AbsCoinGroup#AbsCoin] {
-  implicit lazy val ptc = new TypeBring[PriTC, PriTC, AbsCoinGroup#AbsCoin] {}.t2
-  implicit lazy val pcc = new TypeBring[PriCC, PriCC, AbsCoinGroup#AbsCoin] {}.t2
+trait coinTpeImpl[PriTC <: CoinAmt, PriCC <: CoinAmt] {
+  implicit lazy val ptc = new TypeBring[PriTC, PriTC, CoinAmt] {}.t2
+  implicit lazy val pcc = new TypeBring[PriCC, PriCC, CoinAmt] {}.t2
 }

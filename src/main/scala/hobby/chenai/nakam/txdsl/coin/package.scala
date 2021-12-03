@@ -17,7 +17,7 @@
 package hobby.chenai.nakam.txdsl
 
 import hobby.chenai.nakam.lang.J2S.NonNull
-import hobby.chenai.nakam.txdsl.core.coin.{AbsCashGroup, AbsCoinGroup, AbsTokenGroup}
+import hobby.chenai.nakam.txdsl.core.coin._
 import scala.collection.concurrent.TrieMap
 import scala.language.{implicitConversions, postfixOps}
 
@@ -27,16 +27,6 @@ import scala.language.{implicitConversions, postfixOps}
   */
 package object coin {
   /*为了用一个`import`就能把所有功能导入，而不用许多个`import`。*/
-
-  type Coin     = AbsCoinGroup
-  type Cash     = AbsCashGroup
-  type Token    = AbsTokenGroup
-  type CoinUnt  = AbsCoinGroup#Unt
-  type CashUnt  = AbsCashGroup#Unt
-  type TokenUnt = AbsTokenGroup#Unt
-  type CoinAmt  = AbsCoinGroup#AbsCoin
-  type CashAmt  = AbsCashGroup#AbsCoin
-  type TokenAmt = AbsTokenGroup#AbsCoin
 
   lazy val BTC                                             = BtcToken.BTC
   lazy val SAT                                             = BtcToken.SAT
@@ -232,14 +222,14 @@ package object coin {
   implicit lazy val _ZEC_b: Double => ZCashToken.DslImpl     = ZCashToken.wrapZecNum
   implicit lazy val _ZEC_d: BigDecimal => ZCashToken.DslImpl = ZCashToken.wrapZecNum
 
-  object Serializer extends (AbsCoinGroup#AbsCoin => (BigDecimal, String)) { // format: off
-    def apply(coin: AbsCoinGroup#AbsCoin): (BigDecimal, String) = {
+  object Serializer extends (CoinAmt => (BigDecimal, String)) { // format: off
+    def apply(coin: CoinAmt): (BigDecimal, String) = {
       val std = coin.std
       (std.value, std.unit.name)
     }
 
     //@throws[RuntimeException]
-    def unapply(tuple: (BigDecimal, String)): Option[AbsCoinGroup#AbsCoin] = Option(tuple._2 match { // format: on
+    def unapply(tuple: (BigDecimal, String)): Option[CoinAmt] = Option(tuple._2 match { // format: on
       case CNY.name   => tuple._1 CNY
       case USDT.name  => tuple._1 USDT
       case BTC.name   => tuple._1 BTC
@@ -276,17 +266,18 @@ package object coin {
     })
   }
 
-  implicit class Serializable(coin: AbsCoinGroup#AbsCoin) {
+  implicit class Serializable(coin: CoinAmt) {
     def serialize: (BigDecimal, String) = Serializer(coin)
   }
 
   implicit class Deserializable(tuple: (BigDecimal, String)) { // format: off
-    def desrl: Option[AbsCoinGroup#AbsCoin] = tuple match {
+    def desrl: Option[CoinAmt] = tuple match {
       case Serializer(coin) => Some(coin.ensuring(_.nonNull)) // 相当于`case opt @ Serializer.unapply(tuple) if opt.isDefined =>`
       case _                => None
     }
     @inline def coin: CoinAmt = desrl.get
     @inline def token: TokenAmt = coin.token
+    @inline def cash: CashAmt = coin.cash
   } // format: on
 
   implicit class Str2BigInt(count: String) {
@@ -314,10 +305,7 @@ package object coin {
 //  @inline implicit def double2BigDecimal(count: Double): BigDecimal = BigDecimal(count)
 //  @inline implicit def int2BigDecimal(count: Int): BigDecimal       = BigDecimal(count)
 
-  lazy val ZERO: BigDecimal    = 0
-  lazy val ONE: BigDecimal     = 1
   lazy val ONE_e_8: BigDecimal = 1e-8
-  lazy val TEN: BigDecimal     = 10
 
   lazy val ZERO_CNY = 0.CNY
   lazy val ONE_CNY  = 1.CNY
@@ -325,7 +313,7 @@ package object coin {
   lazy val ZERO_USDT = 0.USDT
   lazy val ONE_USDT  = 1.USDT
 
-  lazy val DUST_ROUGH: BigDecimal = 0.00001
+  //lazy val DUST_ROUGH: BigDecimal = 0.00001
 
   lazy val otherTokensUntStdMap = TrieMap.empty[String, OtherToken#UNIT]
 }

@@ -16,13 +16,13 @@
 
 package hobby.chenai.nakam.txdsl.core.exch
 
-import hobby.chenai.nakam.txdsl.core.coin.AbsCoinGroup
+import hobby.chenai.nakam.txdsl.core.coin.Coin
 
 /**
   * @author Chenai Nakam(chenai.nakam@gmail.com)
   * @version 1.0, 25/05/2017
   */
-class Fee[+GT <: AbsCoinGroup, +GF <: AbsCoinGroup](val coinGroup: GT, val feeGroup: GF) {
+class Fee[+GT <: Coin, +GF <: Coin](val coinGroup: GT, val feeGroup: GF) {
   import feeGroup._
 
   /** 假定手续费只收一种货币。如果需要多个，可以创建多个本对象。
