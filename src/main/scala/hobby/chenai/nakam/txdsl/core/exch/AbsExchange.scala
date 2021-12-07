@@ -91,7 +91,7 @@ abstract class AbsExchange(val name: String, override val pricingToken: Token, o
   /** @tparam CG  [[PriTCoin]]#GROP for `token$cash = true`, [[PriCCoin]]#GROP for `token$cash = false`. */
   override final def getExRate[CG <: Coin](group: Token, token$cash: Boolean, ignoreZero: Boolean = false) = {
     // `group != pricingCash`恒成立（类型都不同），但`pricingToken`本身也是可以的。
-    val rate = if (group == pricingToken) pricingToken.unitStd * ONE else if (token$cash) tokenPriRateMap.get(group) else cashPriRateMap.get(group)
+    val rate = if (token$cash) if (group == pricingToken) pricingToken.unitStd * ONE else tokenPriRateMap.get(group) else cashPriRateMap.get(group)
     require(
       rate != null && (ignoreZero || rate.value > ZERO),
       if (isTokenSupport(group.unitStd)) s"rate of `${group.unitStd}/${if (token$cash) pricingToken.unitStd else pricingCash.unitStd}` have not initialized on `$name`."
