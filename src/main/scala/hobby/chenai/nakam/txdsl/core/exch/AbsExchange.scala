@@ -17,7 +17,6 @@
 package hobby.chenai.nakam.txdsl.core.exch
 
 import hobby.chenai.nakam.lang.TypeBring.AsIs
-import hobby.chenai.nakam.tool.cache.{Delegate, LazyGet, Lru, Memoize}
 import hobby.chenai.nakam.txdsl.core.coin._
 import java.util.concurrent.ConcurrentHashMap
 import scala.language.postfixOps
@@ -32,8 +31,7 @@ import scala.language.postfixOps
   * @author Chenai Nakam(chenai.nakam@gmail.com)
   * @version 1.0, 30/05/2017
   */
-abstract class AbsExchange(val name: String, override val pricingToken: Token, override val pricingCash: Cash, tokens: Token*)
-    extends CoinEx(pricingToken, pricingCash) with Memoize[(Token, Coin), FixedFracDigitsRule] with LazyGet with Lru {
+abstract class AbsExchange(val name: String, override val pricingToken: Token, override val pricingCash: Cash, tokens: Token*) extends CoinEx(pricingToken, pricingCash) {
   require(!tokens.contains(pricingToken))
 
   val supportTokens = pricingToken :: tokens.toList.distinct
@@ -41,18 +39,6 @@ abstract class AbsExchange(val name: String, override val pricingToken: Token, o
   supportTokens.foreach(cashPriRateMap.put(_, zero))
   // tokenPriRateMap（即token定价）是可选的，因此不put into Map.
   // supportTokens.foreach(tokenPriRateMap.put(_, zero))
-
-  /** 不同交易所的规则不同。所以需要重写。 */
-  protected def loadFfdRule(counterParty: (Token, Coin)): FixedFracDigitsRule
-
-  override protected val maxCacheSize = 50
-
-  override protected val delegate = new Delegate[(Token, Coin), FixedFracDigitsRule] {
-    override def load(key: (Token, Coin))                               = Option(loadFfdRule(key))
-    override def update(key: (Token, Coin), value: FixedFracDigitsRule) = Option(value)
-  }
-
-  override final def getFfdRule[T <: Token, C <: Coin](token: T, pricingCoin: C): FixedFracDigitsRule = get(token, pricingCoin).get.as[FixedFracDigitsRule]
 
   // 没有比特币汇率则必须有法币汇率。
   /** 从加密货币到法币的汇率，而法币在一个交易所只有一种。 */
@@ -111,7 +97,7 @@ abstract class CoinEx(val pricingToken: Token, val pricingCash: Cash) {
 
   protected val supportTokens: Seq[Coin]
 
-  protected def getFfdRule[T <: Token, C <: Coin](token: T, pricingCoin: C): FixedFracDigitsRule
+  protected def getFfdRule[T <: Token, C <: Coin](token: T, pricing: C): FixedFracDigitsRule
 
   protected def isTokenExSupport(token: Token): Boolean
   protected def isCashExSupport(token: Token): Boolean
