@@ -35,7 +35,7 @@ object UsdtToken extends AbsTokenGroup {
   }
 
   abstract class USDT private[UsdtToken] (count: BigInt) extends AbsCoin(count: BigInt) {
-    override val isStable = true
+    override final def isFixed = true
 
     override def equals(obj: Any) = obj match {
       case that: USDT => that.canEqual(this) && that.count == this.count

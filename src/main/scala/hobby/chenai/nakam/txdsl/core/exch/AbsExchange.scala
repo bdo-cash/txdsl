@@ -80,15 +80,21 @@ abstract class AbsExchange(val name: String, override val pricingToken: Token, o
     val rate = if (token$cash) if (group == pricingToken) pricingToken.unitStd * ONE else tokenPriRateMap.get(group) else cashPriRateMap.get(group)
     require(
       rate != null && (ignoreZero || rate.value > ZERO),
-      if (isTokenSupport(group.unitStd)) s"rate of `${group.unitStd}/${if (token$cash) pricingToken.unitStd else pricingCash.unitStd}` have not initialized on `$name`."
+      if (isTokenSupport(group.unitStd, token$cash)) s"rate of `${group.unitStd}/${if (token$cash) pricingToken.unitStd else pricingCash.unitStd}` have not initialized on `$name`."
       else s"`$group` is not supported."
     )
     rate.as[CG#COIN]
   }
 
+  def copyTo(ex: AbsExchange): AbsExchange = {
+    supportTokens.foreach { group =>
+      if (ex.isTokenSupport(group.unitStd, tokensOnly = true) && this.isTokenExSupport(group)) ex.updateTokenPricingRate(group.unitStd, getExRate[Token](group, token$cash = true))
+      if (ex.isTokenSupport(group.unitStd, tokensOnly = false) && this.isCashExSupport(group)) ex.updateCashPricingRate(group.unitStd, getExRate[Cash](group, token$cash = false))
+    }
+    ex
+  }
   override def toString = s"`$name`(priCash: ${pricingCash.unitStd} | priTkn: ${pricingToken.unitStd})$supportTokenStr"
-
-  def supportTokenStr = supportTokens.map(_.unitStd).mkString("[", ", ", "]")
+  def supportTokenStr   = supportTokens.map(_.unitStd).mkString("[", ", ", "]")
 }
 
 abstract class CoinEx(val pricingToken: Token, val pricingCash: Cash) {
@@ -106,7 +112,7 @@ abstract class CoinEx(val pricingToken: Token, val pricingCash: Cash) {
 
   /** `pricingToken`是包含在`supportTokens`里面的。 */
   final def isCoinSupport(coin: CoinAmt, pricingOnly: Boolean = false): Boolean = coin.group == pricingCash || (if (pricingOnly) coin.group == pricingToken else isTokenSupport(coin, false))
-  final def isTokenSupport(coin: CoinAmt, tokensOnly: Boolean = true): Boolean  = supportTokens.exists { t => if (tokensOnly && t == pricingToken) false else t == coin.group }
+  final def isTokenSupport(coin: CoinAmt, tokensOnly: Boolean = true): Boolean  = if (tokensOnly && coin.group == pricingToken) false else supportTokens.contains(coin.group)
 
   final def applyExch(src: CoinAmt, dst: CoinUnt, ceiling: Boolean): CoinAmt = {
     if (isCoinSupport(src) && isCoinSupport(dst)) {
@@ -120,7 +126,7 @@ abstract class CoinEx(val pricingToken: Token, val pricingCash: Cash) {
     case (cash: CashAmt, dst: CashUnt, _, _) => dst.unit << cash
     // token => pricingCash
     case (token: TokenAmt, dst: CashUnt, ceiling, promise) =>
-      if (promise /*注意这个promise不能把任务再转给pricingToken，不然会死递归*/ || isCashExSupport(token.group)) {
+      if (promise /*这个 promise 不能把任务再转给 pricingToken，不然会死递归*/ || isCashExSupport(token.group)) {
         val ffdRule = getFfdRule(token.group, dst.group)
         import ffdRule._
         import ffdRule.impl._
@@ -132,9 +138,9 @@ abstract class CoinEx(val pricingToken: Token, val pricingCash: Cash) {
         val ffdRule = getFfdRule(dst.group, cash.group)
         import ffdRule._
         import ffdRule.impl._
-        dst.unit << buy(cash /*注意这里不是dst, cash表示有多少钱*/, getExRate(dst.group, token$cash = false), ceiling)
+        dst.unit << buy(cash /*注意这里不是 dst, cash 表示有多少钱*/, getExRate(dst.group, token$cash = false), ceiling)
       } else cash
-    // pricingToken => pricingToken // 与token不同的是，cash（在一个本对象中）就一种，不需要判断。
+    // pricingToken => pricingToken // 与 token 不同的是，cash（在一个本对象中）就一种，不需要判断。
     case (token: TokenAmt, dst: TokenUnt, _, _) if (token.group eq pricingToken) && (dst.group eq pricingToken) =>
       dst.unit << token
     // token => pricingToken
@@ -152,7 +158,7 @@ abstract class CoinEx(val pricingToken: Token, val pricingCash: Cash) {
         val ffdRule = getFfdRule(dst.group, token.group)
         import ffdRule._
         import ffdRule.impl._
-        dst.unit << buy(token /*注意这里不是dst, token表示有多少钱*/, getExRate(dst.group, token$cash = true), ceiling)
+        dst.unit << buy(token /*注意这里不是 dst, token 表示有多少钱*/, getExRate(dst.group, token$cash = true), ceiling)
       } else if (promise) ex.apply(ex.apply(token, pricingCash.unitStd, ceiling, promise), dst, ceiling, promise)
       else token
     // token => token

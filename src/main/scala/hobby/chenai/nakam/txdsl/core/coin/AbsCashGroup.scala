@@ -26,7 +26,7 @@ abstract class AbsCashGroup extends AbsCoinGroup {
   override type GROUP <: AbsCashGroup
 
   abstract class AbsCoin(count: BigInt) extends super.AbsCoin(count: BigInt) {
-    final val isCash = true
+    final def isCash = true
   }
 
   trait Unt extends AbsCoin with super.Unt

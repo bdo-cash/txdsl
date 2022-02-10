@@ -26,9 +26,9 @@ abstract class AbsTokenGroup extends AbsCoinGroup {
   override type GROUP <: AbsTokenGroup
 
   abstract class AbsCoin(count: BigInt) extends super.AbsCoin(count: BigInt) {
-    final val isCash = false
+    final def isCash = false
     /** 是否为稳定币。 */
-    val isStable = false
+    def isFixed: Boolean = false
   }
 
   trait Unt extends AbsCoin with super.Unt
