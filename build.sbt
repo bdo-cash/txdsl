@@ -34,8 +34,8 @@ publishArtifact in packageDoc := false
 resolvers += "jitpack" at "https://jitpack.io"
 
 libraryDependencies ++= Seq(
-  "com.github.bdo-cash" % "scala-lang" % "253dc64cf9",
-  "com.github.bdo-cash" % "reflow" % "v3.0.4",
+  "com.github.bdo-cash" % "scala-lang" % "138bff0c11",
+  "com.github.bdo-cash" % "reflow" % "39898f86e5",
 
   "junit" % "junit" % "[4.12,)" % Test,
   "org.scalatest" %% "scalatest" % "3.2.0-SNAP7" % Test
