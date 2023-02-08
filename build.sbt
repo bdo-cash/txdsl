@@ -1,17 +1,15 @@
 // format: off
 name := baseDirectory.value.getName
 organization := "hobby.chenai.nakam"
-version := "0.0.1-SNAPSHOT"
+version := "1.0.0"
 
-scalaVersion := "2.11.12"
+scalaVersion := "2.12.17"
 crossScalaVersions := Seq(
-  /*"2.11.7", 多余，不需要两个*/
   "2.11.12",
-  /*"2.12.2", 有一些编译问题：`the interface is not a direct parent`。*/
-  "2.12.12")
+  "2.12.17")
 
 lazy val scalaSettings = Seq(
-  scalaVersion := "2.11.12"
+  scalaVersion := "2.12.17"
 )
 
 //lazy val root = Project(id = "txdsl", base = file("."))
@@ -21,7 +19,7 @@ lazy val scalaSettings = Seq(
 //  )
 
 // 启用对 java8 lambda 语法的支持。
-scalacOptions += "-Xexperimental"
+//scalacOptions += "-Xexperimental"
 
 exportJars := true
 
@@ -34,8 +32,8 @@ publishArtifact in packageDoc := false
 resolvers += "jitpack" at "https://jitpack.io"
 
 libraryDependencies ++= Seq(
-  "com.github.bdo-cash" % "scala-lang" % "138bff0c11",
-  "com.github.bdo-cash" % "reflow" % "39898f86e5",
+  "com.github.bdo-cash" % "scala-lang" % "1096f23b08", // scala 2.12
+  "com.github.bdo-cash" % "reflow" % "01abb6cd52",
 
   "junit" % "junit" % "[4.12,)" % Test,
   "org.scalatest" %% "scalatest" % "3.2.0-SNAP7" % Test
