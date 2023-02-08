@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
-import hobby.chenai.nakam.autotx.core.Fee
-import hobby.chenai.nakam.autotx.core.DSL._
-import hobby.chenai.nakam.autotx.core.coin._
-import hobby.chenai.nakam.autotx.core.coin.BtcGroup.{SAT, _}
-import hobby.chenai.nakam.autotx.core.coin.CnyGroup._
-import hobby.chenai.nakam.autotx.core.coin.EthGroup._
+import hobby.chenai.nakam.txdsl.coin.BtcToken.{SAT, _}
+import hobby.chenai.nakam.txdsl.coin.CnyCash._
+import hobby.chenai.nakam.txdsl.coin.EthToken._
+import hobby.chenai.nakam.txdsl.core.DSL._
+import hobby.chenai.nakam.txdsl.core.coin._
 import Syntax.{A, ABCD}
-import hobby.chenai.nakam.autotx.core.exch.{AbsExchange, YUNBI}
-
-import scala.language.postfixOps
+import hobby.chenai.nakam.txdsl.coin.{BtcToken, CnyCash, EthToken}
+import hobby.chenai.nakam.txdsl.core.exch.{AbsExchange, Fee}
+import scala.language.{implicitConversions, postfixOps}
 
 /**
   * @author Chenai Nakam(chenai.nakam@gmail.com)
@@ -46,7 +45,7 @@ object Syntax {
   \(SAT == BTC)
   \(BTC == BTC)
   \("BTC equals CNY: " + (SAT equals Fen))
-  \(BTC.isInstanceOf[BtcGroup.Token])
+  \(BTC.isInstanceOf[BtcToken.Bitcoin])
   \(BTC.getClass eq SAT.getClass)
   \(BTC.getClass eq Jiao.getClass)
   \(BTC.getClass + ", " + Jiao.getClass)
@@ -69,20 +68,20 @@ object Syntax {
 
   def matchText(token: AbsCoinGroup#AbsCoin) = token match {
     case BTC => println(token + " matches BTC object")
-    case _: BtcGroup.COIN => println(token + " matches BtcZone.COIN type")
+    case _: BtcToken.COIN => println(token + " matches BtcZone.COIN type")
     //case _: BtcZone.Token => println(token + " matches BtcZone.Token type")
     case _: AbsCoinGroup#AbsCoin => println(token + " matches AbsTokenZone#AbsCoin type")
     case _ => println(token + "matches nothing")
   }
 
-  \("CNY.isInstanceOf[CnyZone.RMB]:" + CNY.isInstanceOf[CnyGroup.RMB])
-  \("CNY.isInstanceOf[AbsCoinZone#AbsCash]:" + CNY.isInstanceOf[AbsCashGroup#AbsCash])
+  \("CNY.isInstanceOf[CnyZone.RMB]:" + CNY.isInstanceOf[CnyCash.RMB])
+  \("CNY.isInstanceOf[AbsCoinZone#AbsCoin]:" + CNY.isInstanceOf[AbsCashGroup#AbsCoin])
 
   //  require(CNY.getClass == (1 JIAO).getClass, s"${CNY unitName}不支持${JIAO.unitName}")
 
   \(CNY.getClass + ", class: " + Jiao.getClass)
 
-  type CASH = CnyGroup.COIN
+  type CASH = CnyCash.COIN
 
   def typeMatch(any: Any) = any match {
     case _: CASH => \ _
@@ -159,7 +158,7 @@ object Syntax {
   def meow[H <: C[X], I >: H, J >: H <: Any, K >: H <: I](): Unit = {}
 
 
-  object EthFee extends Fee(EthGroup, CnyGroup) {
+  object EthFee extends Fee(EthToken, CnyCash) {
     import feeGroup._
     lazy val BUY = new Rule(1 CNY, 0.0001, 1 Jiao)
   }
@@ -193,8 +192,8 @@ object Syntax {
   ~>: buy (98 BTC) ~>=
 
   \((12.34567890 CNY) formatted())
-  \((12.34567890987 Fen_3).formatted(fixedFracDigits = 25)(null))
-  \((1234020000 Fen_3) formatted 25)
+  \((12.34567890987 Fen3).formatted(fixedFracDigits = 25)(null))
+  \((1234020000 Fen3) formatted 25)
   \((12345678900000023L SAT) to BTC formatted 25)
   \((23L SAT).formatted(25, 4)(SAT.formatter))
 

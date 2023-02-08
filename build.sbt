@@ -1,26 +1,24 @@
+// format: off
 name := baseDirectory.value.getName
-
 organization := "hobby.chenai.nakam"
-
 version := "0.0.1-SNAPSHOT"
 
-scalaVersion := "2.11.11"
-
+scalaVersion := "2.11.12"
 crossScalaVersions := Seq(
   /*"2.11.7", 多余，不需要两个*/
-  "2.11.11",
+  "2.11.12",
   /*"2.12.2", 有一些编译问题：`the interface is not a direct parent`。*/
-  "2.12.6")
+  "2.12.12")
 
 lazy val scalaSettings = Seq(
-  scalaVersion := "2.11.11"
+  scalaVersion := "2.11.12"
 )
 
-lazy val root = Project(id = "autotx", base = file("."))
-  .dependsOn(/*lang*/)
-  .settings(scalaSettings,
-    aggregate in update := false
-  )
+//lazy val root = Project(id = "txdsl", base = file("."))
+//  .dependsOn(/*lang*/)
+//  .settings(scalaSettings,
+//    aggregate in update := false
+//  )
 
 // 启用对 java8 lambda 语法的支持。
 scalacOptions += "-Xexperimental"
@@ -36,8 +34,8 @@ publishArtifact in packageDoc := false
 resolvers += "jitpack" at "https://jitpack.io"
 
 libraryDependencies ++= Seq(
-  "com.github.dedge-space" % "scala-lang" % "e2c7c95585",
-  "com.github.dedge-space" % "reflow" % "fb6411f3ae",
+  "com.github.bdo-cash" % "scala-lang" % "138bff0c11",
+  "com.github.bdo-cash" % "reflow" % "39898f86e5",
 
   "junit" % "junit" % "[4.12,)" % Test,
   "org.scalatest" %% "scalatest" % "3.2.0-SNAP7" % Test
