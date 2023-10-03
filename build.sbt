@@ -1,15 +1,15 @@
 // format: off
 name := baseDirectory.value.getName
 organization := "hobby.chenai.nakam"
-version := "1.0.0"
+version := "1.0.1"
 
-scalaVersion := "2.12.17"
+scalaVersion := "2.12.18"
 crossScalaVersions := Seq(
   "2.11.12",
-  "2.12.17")
+  "2.12.18")
 
 lazy val scalaSettings = Seq(
-  scalaVersion := "2.12.17"
+  scalaVersion := "2.12.18"
 )
 
 //lazy val root = Project(id = "txdsl", base = file("."))
@@ -32,8 +32,8 @@ publishArtifact in packageDoc := false
 resolvers += "jitpack" at "https://jitpack.io"
 
 libraryDependencies ++= Seq(
-  "com.github.bdo-cash" % "scala-lang" % "1096f23b08", // scala 2.12
-  "com.github.bdo-cash" % "reflow" % "01abb6cd52",
+  "com.github.bdo-cash" % "scala-lang" % "9ae46c9fd4", // scala 2.12
+  "com.github.bdo-cash" % "reflow" % "v3.1.0",
 
   "junit" % "junit" % "[4.12,)" % Test,
   "org.scalatest" %% "scalatest" % "3.2.0-SNAP7" % Test
